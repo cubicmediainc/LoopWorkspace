@@ -1,0 +1,70 @@
+name: 5. Keep Alive
+
+# GitHub disables scheduled workflows in a repository that has had no commit
+# activity for 60 days. When that happens, "4. Build Loop" stops running and the
+# TestFlight build silently expires after 90 days.
+#
+# The upstream sync in "4. Build Loop" already pushes commits whenever LoopKit
+# has new work, which resets that 60-day clock on its own. This workflow only
+# covers the gap: a quiet stretch upstream where no commit lands in time.
+#
+# It runs weekly and pushes an empty commit only when the default branch has
+# been idle for more than STALE_DAYS, so it stays a no-op in normal operation.
+
+on:
+  schedule:
+    # Wednesday at UTC 6:17, deliberately offset from the Sunday build
+    - cron: "17 6 * * 3"
+  workflow_dispatch:
+
+env:
+  # Must stay comfortably under GitHub's 60-day limit: the job has to commit
+  # before the schedule itself gets disabled. With a weekly run, a commit lands
+  # by day ~27 at the latest.
+  STALE_DAYS: 20
+
+jobs:
+  keepalive:
+    name: Keep scheduled actions alive
+    runs-on: ubuntu-latest
+    # Never run this on the upstream repository itself
+    if: github.repository_owner != 'LoopKit'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout default branch
+        uses: actions/checkout@v5
+        with:
+          # GH_PAT (not GITHUB_TOKEN) so the commit is attributed to the account
+          # that owns the fork and reliably counts as repository activity.
+          token: ${{ secrets.GH_PAT }}
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Push an empty commit if the repository has gone stale
+        run: |
+          set -euo pipefail
+
+          last_commit_epoch=$(git log -1 --format=%ct)
+          days_idle=$(( ( $(date +%s) - last_commit_epoch ) / 86400 ))
+
+          echo "Last commit was ${days_idle} day(s) ago (threshold: ${STALE_DAYS})."
+
+          if [ "${days_idle}" -le "${STALE_DAYS}" ]; then
+            echo "### :white_check_mark: Keep Alive - nothing to do" >> "$GITHUB_STEP_SUMMARY"
+            echo "The repository is active (last commit ${days_idle} day(s) ago). No commit was made." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name "GH Action - Keep Alive"
+          git config user.email "action@github.com"
+
+          git commit --allow-empty \
+            -m "chore: keep scheduled actions alive" \
+            -m "Empty commit to reset GitHub's 60-day inactivity timer, which would otherwise disable the scheduled Loop build and let the TestFlight build expire."
+
+          git push origin HEAD:"${{ github.event.repository.default_branch }}"
+
+          echo "### :repeat: Keep Alive - commit pushed" >> "$GITHUB_STEP_SUMMARY"
+          echo "The repository had been idle for ${days_idle} day(s), so an empty commit was pushed to reset the 60-day inactivity timer." >> "$GITHUB_STEP_SUMMARY"
