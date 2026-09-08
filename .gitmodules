@@ -61,3 +61,6 @@
 [submodule "EversenseKit"]
 	path = EversenseKit
 	url = https://github.com/bastiaanv/EversenseKit
+[submodule "PodReportKit"]
+	path = PodReportKit
+	url = https://github.com/cubicmediainc/PodReportKit

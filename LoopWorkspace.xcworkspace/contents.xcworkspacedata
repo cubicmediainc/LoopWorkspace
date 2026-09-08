@@ -118,6 +118,9 @@
       location = "group:OmnipodKit/OmnipodKit.xcodeproj">
    </FileRef>
    <FileRef
+      location = "group:PodReportKit/PodReportKit.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:MedtrumKit/MedtrumKit.xcodeproj">
    </FileRef>
    <FileRef

@@ -199,6 +199,11 @@ jobs:
           # Remove the "#" sign from the beginning of the line below to activate:
           #curl https://github.com/loopnlearn/Loop/commit/d206432b024279ef710df462b20bd464cd9682d4.patch | git apply --directory=Loop -v --whitespace=fix
 
+          # Submodule OmnipodKit patches:
+          # PodReportKit: make OmnipodKit publish the pod details at deactivation
+          # so the error report can be pre-filled. See PodReportKit/README.md.
+          git apply ./PodReportKit/patches/omnipodkit-pod-report-snapshot.patch --directory=OmnipodKit -v --whitespace=fix
+
           # Submodule LoopKit patches:
           # General template for customizing submodule LoopKit 
           # Copy url from a GitHub commit or pull request and insert below, and remove the "#" sign from the beginning of the line to activate:
