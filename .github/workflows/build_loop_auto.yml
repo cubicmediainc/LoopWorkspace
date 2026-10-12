@@ -218,6 +218,11 @@ jobs:
           git apply ./patches/* --allow-empty -v --whitespace=fix
           fi
 
+          # Submodule OmnipodKit patches:
+          # PodReportKit: make OmnipodKit publish the pod details at deactivation
+          # so the error report can be pre-filled. See PodReportKit/README.md.
+          git apply ./PodReportKit/patches/omnipodkit-pod-report-snapshot.patch --directory=OmnipodKit -v --whitespace=fix
+
           # Submodule Loop patches:
           # Template for customizing submodule Loop (changes Loop app name to "CustomLoop")
           # Remove the "#" sign from the beginning of the line below to activate:
